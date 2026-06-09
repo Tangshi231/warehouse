@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据可视化报表</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts-wordcloud/2.1.0/echarts-wordcloud.min.js"></script>
+    <script src="https://assets.pyecharts.org/assets/v5/maps/china.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 30px; color: #00d4ff; }
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 1600px; margin: 0 auto; }
+        .card { background: #16213e; border-radius: 8px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .card h3 { color: #00d4ff; margin-bottom: 8px; font-size: 14px; border-left: 3px solid #00d4ff; padding-left: 8px; }
+        .card-full { grid-column: span 3; }
+        .chart { width: 100%; height: 280px; }
+        .chart-small { height: 200px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 20px; text-align: center; }
+        .kpi-card .value { font-size: 28px; font-weight: bold; color: #fff; }
+        .kpi-card .label { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>数据可视化报表</h1>
+    
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="value">399,583</div>
+            <div class="label">省份最高订单金额 (宁夏)</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="value">1,772</div>
+            <div class="label">7日品牌订单总数</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="value">1,490</div>
+            <div class="label">7日用户行为总数</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="value">355</div>
+            <div class="label">新增用户数</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="card card-full">
+            <h3>各省份订单金额分布（中国地图）</h3>
+            <div id="chinaMap" class="chart"></div>
+        </div>
+
+        <div class="card">
+            <h3>品牌订单量 TOP 10</h3>
+            <div id="barChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card">
+            <h3>流量渠道分析 (UV)</h3>
+            <div id="channelChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card">
+            <h3>品牌订单词云</h3>
+            <div id="wordCloudChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card">
+            <h3>用户行为漏斗</h3>
+            <div id="funnelChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card">
+            <h3>用户留存率</h3>
+            <div id="retentionChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card">
+            <h3>用户留存趋势</h3>
+            <div id="retentionTrendChart" class="chart chart-small"></div>
+        </div>
+
+        <div class="card card-full">
+            <h3>流量渠道详细指标</h3>
+            <div id="channelDetailChart" class="chart"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 中国地图 - 使用外部加载的china.js地图数据
+            const chinaMap = echarts.init(document.getElementById('chinaMap'));
+            
+            // 省份数据 - 使用完整名称匹配china.js中的名称
+            const provinceData = [
+                {name: '宁夏回族自治区', value: 399583},
+                {name: '内蒙古自治区', value: 386232},
+                {name: '湖南省', value: 375814},
+                {name: '浙江省', value: 352197},
+                {name: '安徽省', value: 332872},
+                {name: '辽宁省', value: 324136},
+                {name: '江苏省', value: 317462},
+                {name: '山东省', value: 315280},
+                {name: '四川省', value: 301520},
+                {name: '重庆市', value: 308128},
+                {name: '河南省', value: 298760},
+                {name: '上海市', value: 298216},
+                {name: '黑龙江省', value: 297563},
+                {name: '湖北省', value: 295340},
+                {name: '青海省', value: 292265},
+                {name: '云南省', value: 288920},
+                {name: '北京市', value: 286557},
+                {name: '贵州省', value: 282460},
+                {name: '新疆维吾尔自治区', value: 281712},
+                {name: '福建省', value: 279454},
+                {name: '广西壮族自治区', value: 278190},
+                {name: '山西省', value: 275630},
+                {name: '河北省', value: 275556},
+                {name: '西藏自治区', value: 274233},
+                {name: '陕西省', value: 271480},
+                {name: '江西省', value: 268920},
+                {name: '澳门特别行政区', value: 266716},
+                {name: '海南省', value: 265340},
+                {name: '广东省', value: 261355},
+                {name: '天津市', value: 262180},
+                {name: '吉林省', value: 258940},
+                {name: '香港特别行政区', value: 255720},
+                {name: '台湾省', value: 285830},
+                {name: '甘肃省', value: 272340}
+            ];
+            
+            chinaMap.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        if (params.value) {
+                            return params.name + ': ' + params.value.toLocaleString() + ' 元';
+                        }
+                        return params.name;
+                    }
+                },
+                visualMap: {
+                    min: 250000,
+                    max: 400000,
+                    calculable: true,
+                    inRange: {
+                        color: ['#50a3ba', '#eac736', '#d94e5d']
+                    },
+                    textStyle: { color: '#fff' }
+                },
+                series: [{
+                    name: '订单金额',
+                    type: 'map',
+                    map: 'china',
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        label: {
+                            show: false
+                        },
+                        itemStyle: {
+                            areaColor: '#ff6b6b'
+                        }
+                    },
+                    itemStyle: {
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    },
+                    data: provinceData
+                }]
+            });
+            
+            window.addEventListener('resize', () => chinaMap.resize());
+
+            // 品牌订单量
+            const barChart = echarts.init(document.getElementById('barChart'));
+            barChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['小米', '联想', '苹果', 'Redmi', '索芙特', 'CAREMiLLE', 'TCL', '香奈儿', '长粒香', '金沙河'],
+                    axisLabel: { color: '#888', rotate: 30 }, axisLine: { lineStyle: { color: '#333' } } },
+                yAxis: { type: 'value', axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } },
+                    splitLine: { lineStyle: { color: '#333' } } },
+                series: [{ name: '订单数', type: 'bar', data: [364, 352, 273, 210, 165, 156, 147, 110, 73, 72],
+                    itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#00d4ff' }, { offset: 1, color: '#0066ff' }]) }, barRadius: 5 }]
+            });
+            window.addEventListener('resize', () => barChart.resize());
+
+            // 品牌订单词云 - 结合品牌订单量和SKU商品收藏数据
+            const wordCloudChart = echarts.init(document.getElementById('wordCloudChart'));
+            const wordCloudData = [
+                { name: '小米', value: 364 }, { name: '联想', value: 352 }, { name: '苹果', value: 273 },
+                { name: 'Redmi', value: 210 }, { name: '索芙特', value: 165 }, { name: 'CAREMiLLE', value: 156 },
+                { name: 'TCL', value: 147 }, { name: '香奈儿', value: 110 }, { name: '长粒香', value: 73 },
+                { name: '金沙河', value: 72 }, { name: '小米电视', value: 50 }, { name: 'iPhone', value: 45 },
+                { name: '珂曼口红', value: 30 }, { name: '拯救者', value: 25 }, { name: '香水', value: 20 }
+            ];
+            wordCloudChart.setOption({
+                tooltip: { show: true },
+                series: [{
+                    type: 'wordCloud',
+                    gridSize: 2,
+                    sizeRange: [12, 50],
+                    rotationRange: [-90, 90],
+                    rotationStep: 45,
+                    shape: 'circle',
+                    drawOutOfBound: false,
+                    textStyle: {
+                        color: function() {
+                            return 'rgb(' + [
+                                Math.round(Math.random() * 160),
+                                Math.round(Math.random() * 160),
+                                Math.round(Math.random() * 255)
+                            ].join(',') + ')';
+                        }
+                    },
+                    emphasis: {
+                        textStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    data: wordCloudData
+                }]
+            });
+            window.addEventListener('resize', () => wordCloudChart.resize());
+
+            // 流量渠道分析
+            const channelChart = echarts.init(document.getElementById('channelChart'));
+            channelChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                legend: { orient: 'vertical', right: '5%', top: 'center', textStyle: { color: '#888' } },
+                series: [{ name: '渠道UV', type: 'pie', radius: ['40%', '70%'], center: ['35%', '50%'],
+                    itemStyle: { borderRadius: 10, borderColor: '#16213e', borderWidth: 2 },
+                    label: { show: false }, emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                    data: [{ value: 413, name: 'Appstore' }, { value: 310, name: 'xiaomi' },
+                        { value: 279, name: 'oppo' }, { value: 166, name: 'wandoujia' },
+                        { value: 152, name: 'web' }, { value: 92, name: 'vivo' }, { value: 78, name: '360' }] }]
+            });
+            window.addEventListener('resize', () => channelChart.resize());
+
+            // 流量渠道详细指标
+            const channelDetailChart = echarts.init(document.getElementById('channelDetailChart'));
+            channelDetailChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['UV数', '浏览量(SV)'], textStyle: { color: '#888' }, top: 0 },
+                xAxis: { type: 'category', data: ['Appstore', 'xiaomi', 'oppo', 'wandoujia', 'web', 'vivo', '360'],
+                    axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } } },
+                yAxis: [
+                    { type: 'value', name: 'UV/SV', axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } },
+                        splitLine: { lineStyle: { color: '#333' } } },
+                    { type: 'value', name: '跳出率%', axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } },
+                        splitLine: { show: false } }
+                ],
+                series: [
+                    { name: 'UV数', type: 'bar', data: [413, 310, 279, 166, 152, 92, 78], itemStyle: { color: '#4facfe' }, barWidth: 20 },
+                    { name: '浏览量(SV)', type: 'bar', data: [852, 514, 390, 209, 184, 109, 83], itemStyle: { color: '#00f2fe' }, barWidth: 20 },
+                    { name: '跳出率', type: 'line', yAxisIndex: 1, data: [1, 3, 2, 1, 2, 1, 1], smooth: true, itemStyle: { color: '#f5576c' } }
+                ]
+            });
+            window.addEventListener('resize', () => channelDetailChart.resize());
+
+            // 用户行为漏斗
+            const funnelChart = echarts.init(document.getElementById('funnelChart'));
+            funnelChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c}' },
+                series: [{ name: '用户行为', type: 'funnel', left: '10%', top: 30, bottom: 30, width: '80%', min: 0, max: 400, gap: 2,
+                    label: { show: true, position: 'inside', color: '#fff' },
+                    itemStyle: { borderColor: '#16213e', borderWidth: 2 },
+                    data: [
+                        { value: 394, name: '浏览商品详情', itemStyle: { color: '#4facfe' } },
+                        { value: 256, name: '浏览首页', itemStyle: { color: '#00f2fe' } },
+                        { value: 176, name: '下单', itemStyle: { color: '#f093fb' } },
+                        { value: 152, name: '支付', itemStyle: { color: '#f5576c' } }
+                    ] }]
+            });
+            window.addEventListener('resize', () => funnelChart.resize());
+
+            // 用户留存率
+            const retentionChart = echarts.init(document.getElementById('retentionChart'));
+            retentionChart.setOption({
+                tooltip: { trigger: 'axis', formatter: function(params) {
+                    var d = params[0];
+                    return '第' + (d.dataIndex + 1) + '天留存率: ' + d.value + '%';
+                }},
+                xAxis: { type: 'category', data: ['第1天', '第2天', '第3天', '第4天', '第5天', '第6天'],
+                    axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } } },
+                yAxis: { type: 'value', axisLabel: { formatter: '{value}%', color: '#888' }, axisLine: { lineStyle: { color: '#333' } },
+                    splitLine: { lineStyle: { color: '#333' } } },
+                series: [{ name: '留存率', type: 'line', data: [2.38, 7.55, 4.17, 11.32, 12.77, 13.21], smooth: true,
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(79, 172, 254, 0.5)' }, { offset: 1, color: 'rgba(79, 172, 254, 0.1)' }]) },
+                    itemStyle: { color: '#4facfe' }, lineStyle: { width: 3 } }]
+            });
+            window.addEventListener('resize', () => retentionChart.resize());
+
+            // 用户留存趋势
+            const retentionTrendChart = echarts.init(document.getElementById('retentionTrendChart'));
+            retentionTrendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['新增用户', '留存用户'], textStyle: { color: '#888' }, top: 0 },
+                xAxis: { type: 'category', data: ['05-26', '05-27', '05-28', '05-29', '05-30', '05-31'],
+                    axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } } },
+                yAxis: { type: 'value', axisLabel: { color: '#888' }, axisLine: { lineStyle: { color: '#333' } },
+                    splitLine: { lineStyle: { color: '#333' } } },
+                series: [
+                    { name: '新增用户', type: 'bar', data: [53, 47, 53, 48, 53, 42], itemStyle: { color: '#4facfe' }, barWidth: 15 },
+                    { name: '留存用户', type: 'bar', data: [7, 6, 6, 2, 4, 1], itemStyle: { color: '#f5576c' }, barWidth: 15 }
+                ]
+            });
+            window.addEventListener('resize', () => retentionTrendChart.resize());
+        });
+    </script>
+</body>
+</html>

@@ -326,20 +326,27 @@ ADS层生成最终的业务指标，供报表和大屏展示：
 ## 9 代码目录结构
 
 ```
-├── scripts/                    # SQL脚本目录
-│   ├── 建表-首日插入.sql       # ODS/DWD建表语句
-│   ├── dim层处理.sql           # DIM层数据处理
-│   ├── dws层聚合.sql           # DWS层聚合逻辑
-│   └── ads层指标.sql           # ADS层指标计算
-├── datax/                     # DataX配置目录
-│   ├── mysql_to_hdfs.json      # MySQL全量同步配置
+├── scripts/                         # 脚本目录
+│   ├── README.md                    # 脚本目录说明
+│   ├── create_tables_initial.sql    # ODS/DWD建表及首日数据插入
+│   ├── datax_full_DS/               # DataX全量同步（MySQL→HDFS）
+│   │   ├── gen_import_config.py
+│   │   ├── gen_import_config.sh
+│   │   └── mysql_to_hdfs_full.sh
+│   ├── flume/                       # Flume数据采集配置
+│   │   ├── topic_db同步/            # 业务数据同步（Kafka→HDFS）
+│   │   └── topic_log同步/           # 日志数据同步（Kafka→HDFS）
+│   ├── hive/                        # Hive每日数据装载脚本
+│   │   ├── hdfs_to_ods.sh           # HDFS→ODS
+│   │   ├── ods_to_dim.sh            # ODS→DIM
+│   ├── maxwell_inc_DS/              # Maxwell增量采集binlog
+│   │   └── mxw.sh
+│   └── mock/                        # 模拟数据生成
+│       └── mock.sh
+├── images/                          # 项目图片资源
+│   ├── business_data.jpg
 │   └── ...
-├── flume/                     # Flume配置目录
-│   ├── agent.conf              # Flume Agent配置
-│   └── ...
-└── dolphinscheduler/          # DolphinScheduler工作流
-    ├── workflow.json           # 调度工作流配置
-    └── ...
+└── README.md                        # 项目说明文档
 ```
 
 ## 10 数据质量保障
